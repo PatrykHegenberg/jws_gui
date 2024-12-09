@@ -3,10 +3,11 @@ module github.com/PatrykHegenberg/jws_gui
 go 1.23.3
 
 require (
+	fyne.io/fyne v1.4.3
 	fyne.io/fyne/v2 v2.5.2
-	github.com/PatrykHegenberg/jws_core v0.0.0-20241202223401-77186ec1b7ba
 	github.com/spf13/cobra v1.8.1
 	golang.org/x/sys v0.20.0
+	golang.org/x/term v0.20.0
 )
 
 require (

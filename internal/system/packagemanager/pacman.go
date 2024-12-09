@@ -33,9 +33,9 @@ func (p *Pacman) Packages() packagemap {
 
 func (p *Pacman) InstallCommand(pkg *Package) string {
 	if pkg.SystemPackage == false {
-		return pkg.InstallCommand[p.osid]
+		return pkg.NativePackageName[p.osid]
 	}
-	return "sudo pacman -S " + pkg.Name
+	return "pacman -S " + pkg.NativePackageName[p.name] + " --noconfirm"
 }
 
 func (p *Pacman) Name() string {
@@ -46,7 +46,7 @@ func (p *Pacman) PackageInstalled(pkg *Package) (bool, error) {
 	if pkg.SystemPackage == false {
 		return false, nil
 	}
-	stdout, err := exec.Command("pacman", "-Q", pkg.InstallCommand[p.name]).Output()
+	stdout, err := exec.Command("pacman", "-Q", pkg.NativePackageName[p.name]).Output()
 	if err != nil {
 		_, ok := err.(*exec.ExitError)
 		if ok {
@@ -70,7 +70,7 @@ func (p *Pacman) PackageAvailable(pkg *Package) (bool, error) {
 	if pkg.SystemPackage == false {
 		return false, nil
 	}
-	output, err := exec.Command("pacman", "-Si", pkg.InstallCommand[p.name]).Output()
+	output, err := exec.Command("pacman", "-Si", pkg.NativePackageName[p.name]).Output()
 	if err != nil {
 		_, ok := err.(*exec.ExitError)
 		if ok {

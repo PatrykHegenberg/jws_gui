@@ -42,9 +42,9 @@ func (n *Nixpkgs) Packages() packagemap {
 
 func (n *Nixpkgs) InstallCommand(pkg *Package) string {
 	if pkg.SystemPackage == false {
-		return pkg.InstallCommand[n.osid]
+		return pkg.NativePackageName[n.osid]
 	}
-	return "nix-env -iA " + pkg.Name
+	return "nix-env -iA " + pkg.NativePackageName[n.name] + " --non-interactive"
 }
 
 func (n *Nixpkgs) Name() string {
@@ -56,7 +56,7 @@ func (n *Nixpkgs) PackageInstalled(pkg *Package) (bool, error) {
 		return false, nil
 	}
 
-	stdout, err := exec.Command(".", "nix-env", "--json", "-qA", pkg.InstallCommand[n.name]).Output()
+	stdout, err := exec.Command(".", "nix-env", "--json", "-qA", pkg.NativePackageName[n.name]).Output()
 	if err != nil {
 		return false, nil
 	}
@@ -102,7 +102,7 @@ func (n *Nixpkgs) PackageAvailable(pkg *Package) (bool, error) {
 		return false, nil
 	}
 
-	stdout, err := exec.Command(".", "nix-env", "--json", "-qaA", pkg.InstallCommand[n.name]).Output()
+	stdout, err := exec.Command(".", "nix-env", "--json", "-qaA", pkg.NativePackageName[n.name]).Output()
 	if err != nil {
 		return false, nil
 	}

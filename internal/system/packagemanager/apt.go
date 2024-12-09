@@ -35,9 +35,9 @@ func (a *Apt) Packages() packagemap {
 
 func (a *Apt) InstallCommand(pkg *Package) string {
 	if pkg.SystemPackage == false {
-		return pkg.InstallCommand[a.osid]
+		return pkg.NativePackageName[a.osid]
 	}
-	return "sudo apt install " + pkg.Name
+	return "apt install " + pkg.NativePackageName[a.name] + " -y"
 }
 
 func (a *Apt) Name() string {
@@ -48,7 +48,7 @@ func (a *Apt) PackageInstalled(pkg *Package) (bool, error) {
 	if pkg.SystemPackage == false {
 		return false, nil
 	}
-	cmd := exec.Command("apt", "list", "-qq", pkg.InstallCommand[a.name])
+	cmd := exec.Command("apt", "list", "-qq", pkg.NativePackageName[a.name])
 	var stdo, stde bytes.Buffer
 	cmd.Stdout = &stdo
 	cmd.Stderr = &stde
@@ -61,7 +61,7 @@ func (a *Apt) PackageAvailable(pkg *Package) (bool, error) {
 	if pkg.SystemPackage == false {
 		return false, nil
 	}
-	stdout, err := exec.Command(".", "apt", "list", "-qq", pkg.InstallCommand[a.name]).Output()
+	stdout, err := exec.Command(".", "apt", "list", "-qq", pkg.NativePackageName[a.name]).Output()
 	output := a.removeEscapeSequences(string(stdout))
 	installed := strings.HasPrefix(output, pkg.Name)
 	a.getPackageVersion(pkg, output)

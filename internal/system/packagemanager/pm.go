@@ -1,12 +1,12 @@
 package packagemanager
 
 type Package struct {
-	Name           string
-	Version        string
-	InstallCommand map[string]string
-	SystemPackage  bool
-	Library        bool
-	Optional       bool
+	Name              string
+	Version           string
+	NativePackageName map[string]string
+	SystemPackage     bool
+	Library           bool
+	Optional          bool
 }
 
 type packagemap = map[string][]*Package
@@ -26,7 +26,7 @@ func GenerateUniversalPackages() packagemap {
 			{
 				Name:          "git",
 				SystemPackage: true,
-				InstallCommand: map[string]string{
+				NativePackageName: map[string]string{
 					"apt":      "git",
 					"dnf":      "git",
 					"pacman":   "git",
@@ -41,7 +41,7 @@ func GenerateUniversalPackages() packagemap {
 			{
 				Name:          "openjdk-17",
 				SystemPackage: true,
-				InstallCommand: map[string]string{
+				NativePackageName: map[string]string{
 					"apt":      "openjdk-17-jdk",
 					"dnf":      "java-17-openjdk-devel",
 					"pacman":   "jdk17-openjdk",
@@ -57,7 +57,7 @@ func GenerateUniversalPackages() packagemap {
 				Name:          "podman",
 				SystemPackage: true,
 				Optional:      true,
-				InstallCommand: map[string]string{
+				NativePackageName: map[string]string{
 					"apt":      "podman",
 					"dnf":      "podman",
 					"pacman":   "podman",
@@ -73,7 +73,7 @@ func GenerateUniversalPackages() packagemap {
 				Name:          "vscode",
 				SystemPackage: false,
 				Optional:      true,
-				InstallCommand: map[string]string{
+				NativePackageName: map[string]string{
 					"apt":      "code",
 					"dnf":      "code",
 					"pacman":   "code",
@@ -88,7 +88,7 @@ func GenerateUniversalPackages() packagemap {
 			{
 				Name:          "maven",
 				SystemPackage: true,
-				InstallCommand: map[string]string{
+				NativePackageName: map[string]string{
 					"apt":      "maven",
 					"dnf":      "maven",
 					"pacman":   "maven",
@@ -103,7 +103,7 @@ func GenerateUniversalPackages() packagemap {
 				Name:          "gradle",
 				SystemPackage: true,
 				Optional:      true,
-				InstallCommand: map[string]string{
+				NativePackageName: map[string]string{
 					"apt":      "gradle",
 					"dnf":      "gradle",
 					"pacman":   "gradle",
@@ -118,7 +118,7 @@ func GenerateUniversalPackages() packagemap {
 			{
 				Name:          "gcc",
 				SystemPackage: true,
-				InstallCommand: map[string]string{
+				NativePackageName: map[string]string{
 					"apt":      "build-essential",
 					"dnf":      "gcc",
 					"pacman":   "gcc",
