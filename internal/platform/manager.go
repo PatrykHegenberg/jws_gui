@@ -1,4 +1,4 @@
-package main
+package platform
 
 import (
 	"fmt"
@@ -142,7 +142,7 @@ func (pm *PlatformManager) initRequirements() {
 	}
 }
 
-func (pm *PlatformManager) checkAndInstallRequirements(gui bool, window fyne.Window) error {
+func (pm *PlatformManager) CheckAndInstallRequirements(gui bool, window fyne.Window) error {
 	if !gui {
 		for _, req := range pm.Requirements {
 			if !req.Installed {

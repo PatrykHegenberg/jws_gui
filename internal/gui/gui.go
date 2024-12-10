@@ -1,4 +1,4 @@
-package main
+package gui
 
 import (
 	"fyne.io/fyne/theme"
@@ -8,9 +8,10 @@ import (
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
+	"github.com/PatrykHegenberg/jws_gui/internal/platform"
 )
 
-func createDependencyList(pm *PlatformManager) *widget.List {
+func createDependencyList(pm *platform.PlatformManager) *widget.List {
 	list := widget.NewList(
 		func() int { return len(pm.Requirements) },
 		func() fyne.CanvasObject {
@@ -39,7 +40,7 @@ func createDependencyList(pm *PlatformManager) *widget.List {
 	return list
 }
 
-func setupGUI(pm *PlatformManager) {
+func SetupGUI(pm *platform.PlatformManager) {
 	myApp := app.New()
 	myWindow := myApp.NewWindow("Uni Project Starter")
 
@@ -61,7 +62,7 @@ func setupGUI(pm *PlatformManager) {
 	}
 
 	installButton := widget.NewButton("Fehlende Pakete installieren", func() {
-		err := pm.checkAndInstallRequirements(true, myWindow)
+		err := pm.CheckAndInstallRequirements(true, myWindow)
 		if err != nil {
 			dialog.ShowError(err, myWindow)
 		}

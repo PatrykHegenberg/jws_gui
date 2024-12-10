@@ -1,13 +1,14 @@
-package main
+package cli
 
 import (
 	"fmt"
 	"log"
 
+	"github.com/PatrykHegenberg/jws_gui/internal/platform"
 	"github.com/spf13/cobra"
 )
 
-func setupCLI(pm *PlatformManager) *cobra.Command {
+func SetupCLI(pm *platform.PlatformManager) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "uni-project-starter",
 		Short: "Universitäts-Projekt-Starter-Anwendung",
@@ -33,7 +34,7 @@ func setupCLI(pm *PlatformManager) *cobra.Command {
 		Use:   "install",
 		Short: "Installiert fehlende Systemanforderungen",
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := pm.checkAndInstallRequirements(false, nil); err != nil {
+			if err := pm.CheckAndInstallRequirements(false, nil); err != nil {
 				log.Fatalf("Fehler bei der Installation: %v", err)
 			}
 		},
