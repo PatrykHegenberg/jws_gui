@@ -1,6 +1,6 @@
 module github.com/PatrykHegenberg/jws_gui
 
-go 1.23.3
+go 1.23
 
 require (
 	fyne.io/fyne v1.4.3
