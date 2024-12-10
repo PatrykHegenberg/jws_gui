@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"github.com/PatrykHegenberg/jws_gui/internal/system/operatingsystem"
@@ -84,16 +85,20 @@ type SoftwareRequirement struct {
 	Package        *packagemanager.Package
 	InstallCommand string
 	Installed      bool
+	InstalledBind  binding.Bool
 }
 
 type PlatformManager struct {
 	PackageManager packagemanager.PackageManager
 	Requirements   []*SoftwareRequirement
 	OS             *operatingsystem.OS
+	AllInstalled   binding.Bool
 }
 
 func NewPlatformManager() *PlatformManager {
-	pm := &PlatformManager{}
+	pm := &PlatformManager{
+		AllInstalled: binding.NewBool(),
+	}
 
 	osInfo, err := operatingsystem.Info()
 	if err != nil {
@@ -133,6 +138,8 @@ func (pm *PlatformManager) initRequirements() {
 
 			requirement.Installed = installed
 			requirement.InstallCommand = pm.PackageManager.InstallCommand(pkg)
+			requirement.InstalledBind = binding.NewBool()
+			requirement.InstalledBind.Set(requirement.Installed)
 
 			pm.Requirements = append(pm.Requirements, requirement)
 		}
@@ -141,7 +148,6 @@ func (pm *PlatformManager) initRequirements() {
 
 func (pm *PlatformManager) checkAndInstallRequirements(gui bool, window fyne.Window) error {
 	if !gui {
-		// CLI-Modus: Synchron arbeiten
 		for _, req := range pm.Requirements {
 			if !req.Installed {
 				fmt.Printf("Möchten Sie %s installieren? (j/n): ", req.Name)
@@ -160,7 +166,6 @@ func (pm *PlatformManager) checkAndInstallRequirements(gui bool, window fyne.Win
 		return nil
 	}
 
-	// GUI-Modus: Asynchrone, sequentielle Verarbeitung
 	var queue []*SoftwareRequirement
 	for _, req := range pm.Requirements {
 		if !req.Installed {
@@ -171,12 +176,10 @@ func (pm *PlatformManager) checkAndInstallRequirements(gui bool, window fyne.Win
 	var processNext func()
 	processNext = func() {
 		if len(queue) == 0 {
-			// Alle Pakete abgearbeitet
 			dialog.ShowInformation("Fertig", "Alle Pakete wurden verarbeitet.", window)
 			return
 		}
 
-		// Nächstes Paket aus der Warteschlange holen
 		req := queue[0]
 		queue = queue[1:]
 
@@ -184,25 +187,23 @@ func (pm *PlatformManager) checkAndInstallRequirements(gui bool, window fyne.Win
 			fmt.Sprintf("Möchten Sie %s installieren?", req.Name),
 			func(install bool) {
 				if install {
-					// Passwortabfrage-Dialog starten
 					passwordEntry := widget.NewPasswordEntry()
 					dialog.ShowForm("Sudo-Passwort erforderlich", "OK", "Abbrechen",
 						[]*widget.FormItem{widget.NewFormItem("Sudo Passwort", passwordEntry)},
 						func(submitted bool) {
 							if !submitted {
 								dialog.ShowError(fmt.Errorf("Installation abgebrochen"), window)
-								processNext() // Nächstes Paket abarbeiten
+								processNext()
 								return
 							}
 
 							sudoPass := passwordEntry.Text
 							if sudoPass == "" {
 								dialog.ShowError(fmt.Errorf("Kein Passwort eingegeben"), window)
-								processNext() // Nächstes Paket abarbeiten
+								processNext()
 								return
 							}
 
-							// Installationskommando ausführen
 							go func() {
 								installCommand := pm.PackageManager.InstallCommand(req.Package)
 								cmd := exec.Command("sudo", "-S", "sh", "-c", installCommand)
@@ -218,27 +219,28 @@ func (pm *PlatformManager) checkAndInstallRequirements(gui bool, window fyne.Win
 										func() string {
 											if err == nil {
 												req.Installed = true
+												req.InstalledBind.Set(true)
+												pm.checkAllInstalled()
 												return "erfolgreich installiert"
 											}
 											return fmt.Sprintf("mit Fehlern installiert: %v", err)
 										}()),
 								})
-								processNext() // Nächstes Paket abarbeiten
+								processNext()
 							}()
 						}, window)
 				} else {
-					processNext() // Nächstes Paket abarbeiten
+					processNext()
 				}
 			}, window)
 	}
 
-	processNext() // Starte die Verarbeitung
+	processNext()
 	return nil
 }
 
 func (pm *PlatformManager) installPackage(pkg *packagemanager.Package, gui bool, window fyne.Window) error {
 	if gui {
-		// GUI-Modus: Verwenden Sie einen Fyne-Dialog
 		passwordEntry := widget.NewPasswordEntry()
 		dialog.ShowForm("Sudo-Passwort erforderlich", "OK", "Abbrechen",
 			[]*widget.FormItem{widget.NewFormItem("Sudo Passwort", passwordEntry)},
@@ -254,7 +256,6 @@ func (pm *PlatformManager) installPackage(pkg *packagemanager.Package, gui bool,
 					return
 				}
 
-				// Führe die Installation mit sudo aus
 				installCommand := pm.PackageManager.InstallCommand(pkg)
 				cmd := exec.Command("sudo", "-S", "sh", "-c", installCommand)
 				cmd.Stdin = strings.NewReader(sudoPass + "\n")
@@ -267,19 +268,19 @@ func (pm *PlatformManager) installPackage(pkg *packagemanager.Package, gui bool,
 				} else {
 					dialog.ShowInformation("Installation erfolgreich",
 						fmt.Sprintf("%s wurde erfolgreich installiert", pkg.Name), window)
+					pm.checkAllInstalled()
 				}
 			}, window)
 		return nil
 	}
 
-	// CLI-Modus: Fragen Sie nach dem Passwort in der Konsole
 	fmt.Print("Bitte geben Sie Ihr sudo-Passwort ein: ")
 	passBytes, err := term.ReadPassword(int(syscall.Stdin))
 	if err != nil {
 		return fmt.Errorf("Fehler beim Lesen des Passworts: %v", err)
 	}
 	sudoPass := string(passBytes)
-	fmt.Println() // Neue Zeile nach der Passworteingabe
+	fmt.Println()
 
 	if sudoPass == "" {
 		return fmt.Errorf("Installation abgebrochen")
@@ -299,13 +300,15 @@ func (pm *PlatformManager) installPackage(pkg *packagemanager.Package, gui bool,
 	return nil
 }
 
-func (pm *PlatformManager) checkAllInstalled() bool {
+func (pm *PlatformManager) checkAllInstalled() {
+	allInstalled := true
 	for _, req := range pm.Requirements {
 		if !req.Installed {
-			return false
+			allInstalled = false
+			break
 		}
 	}
-	return true
+	pm.AllInstalled.Set(allInstalled)
 }
 
 func setupCLI(pm *PlatformManager) *cobra.Command {
@@ -344,21 +347,7 @@ func setupCLI(pm *PlatformManager) *cobra.Command {
 	return rootCmd
 }
 
-func setupGUI(pm *PlatformManager) {
-	myApp := app.New()
-	myWindow := myApp.NewWindow("Uni Project Starter")
-
-	titleLabel := widget.NewLabel("Java Web Dev Starter")
-
-	titleLabel.TextStyle = fyne.TextStyle{
-		Bold:   true,
-		Italic: false,
-	}
-
-	titleLabel.Resize(fyne.NewSize(400, 50))
-
-	titleContainer := container.NewCenter(titleLabel)
-
+func createDependencyList(pm *PlatformManager) *widget.List {
 	list := widget.NewList(
 		func() int { return len(pm.Requirements) },
 		func() fyne.CanvasObject {
@@ -374,13 +363,35 @@ func setupGUI(pm *PlatformManager) {
 			label := box.Objects[1].(*widget.Label)
 
 			label.SetText(req.Name)
-			if req.Installed {
-				icon.SetResource(theme.ConfirmIcon())
-			} else {
-				icon.SetResource(theme.CancelIcon())
-			}
+			req.InstalledBind.AddListener(binding.NewDataListener(func() {
+				installed, _ := req.InstalledBind.Get()
+				if installed {
+					icon.SetResource(theme.ConfirmIcon())
+				} else {
+					icon.SetResource(theme.CancelIcon())
+				}
+			}))
 		},
 	)
+	return list
+}
+
+func setupGUI(pm *PlatformManager) {
+	myApp := app.New()
+	myWindow := myApp.NewWindow("Uni Project Starter")
+
+	titleLabel := widget.NewLabel("Java Web Dev Starter")
+
+	titleLabel.TextStyle = fyne.TextStyle{
+		Bold:   true,
+		Italic: false,
+	}
+
+	titleLabel.Resize(fyne.NewSize(400, 50))
+
+	titleContainer := container.NewCenter(titleLabel)
+
+	list := createDependencyList(pm)
 
 	updateList := func() {
 		list.Refresh()
@@ -394,15 +405,6 @@ func setupGUI(pm *PlatformManager) {
 		list.Refresh()
 		updateList()
 	})
-
-	checkAllInstalled := func() bool {
-		for _, req := range pm.Requirements {
-			if !req.Installed {
-				return false
-			}
-		}
-		return true
-	}
 
 	packageBox := container.NewBorder(nil, installButton, nil, nil, list)
 
@@ -425,17 +427,21 @@ func setupGUI(pm *PlatformManager) {
 			packageBox,
 		),
 	)
-	myWindow.SetContent(content)
 
 	updateList()
-
-	if checkAllInstalled() {
-		installButton.Hide()
-		projectsBox.Show()
-	} else {
-		installButton.Show()
-		projectsBox.Hide()
-	}
+	pm.AllInstalled.AddListener(binding.NewDataListener(func() {
+		allInstalled, _ := pm.AllInstalled.Get()
+		if allInstalled {
+			list.Hide()
+			installButton.Hide()
+			projectsBox.Show()
+		} else {
+			list.Show()
+			installButton.Show()
+			projectsBox.Hide()
+		}
+	}))
+	myWindow.SetContent(content)
 
 	myWindow.Resize(fyne.NewSize(800, 400))
 	myWindow.ShowAndRun()
