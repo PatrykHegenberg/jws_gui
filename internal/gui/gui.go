@@ -40,20 +40,30 @@ func createDependencyList(pm *platform.PlatformManager) *widget.List {
 	return list
 }
 
-func SetupGUI(pm *platform.PlatformManager) {
-	myApp := app.New()
-	myWindow := myApp.NewWindow("Uni Project Starter")
+func createProjectBox(pm *platform.PlatformManager) *fyne.Container {
+	return container.NewVBox(
+		widget.NewButton("Basic JakartaEE with Servlet and DB", func() {}),
+		widget.NewButton("Basic JakartaEE with JSF and DB", func() {}),
+		widget.NewButton("Basic JakartaEE with RestAPI and DB", func() {}),
+		widget.NewButton("Basich SpringBoot MicroService with DB", func() {}),
+	)
+}
 
+func createTitle() *fyne.Container {
 	titleLabel := widget.NewLabel("Java Web Dev Starter")
-
 	titleLabel.TextStyle = fyne.TextStyle{
 		Bold:   true,
 		Italic: false,
 	}
-
 	titleLabel.Resize(fyne.NewSize(400, 50))
+	return container.NewCenter(titleLabel)
+}
 
-	titleContainer := container.NewCenter(titleLabel)
+func SetupGUI(pm *platform.PlatformManager) {
+	myApp := app.New()
+	myWindow := myApp.NewWindow("Uni Project Starter")
+
+	titleContainer := createTitle()
 
 	list := createDependencyList(pm)
 
@@ -71,13 +81,8 @@ func SetupGUI(pm *platform.PlatformManager) {
 	})
 
 	packageBox := container.NewBorder(nil, installButton, nil, nil, list)
+	projectsBox := createProjectBox(pm)
 
-	projectsBox := container.NewVBox(
-		widget.NewButton("Basic JakartaEE with Servlet and DB", func() {}),
-		widget.NewButton("Basic JakartaEE with JSF and DB", func() {}),
-		widget.NewButton("Basic JakartaEE with RestAPI and DB", func() {}),
-		widget.NewButton("Basich SpringBoot MicroService with DB", func() {}),
-	)
 	content := container.NewBorder(
 		titleContainer,
 		projectsBox,
