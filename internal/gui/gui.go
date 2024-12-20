@@ -1,6 +1,8 @@
 package gui
 
 import (
+	"log"
+
 	"fyne.io/fyne/theme"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -42,10 +44,22 @@ func createDependencyList(pm *platform.PlatformManager) *widget.List {
 
 func createProjectBox(pm *platform.PlatformManager) *fyne.Container {
 	return container.NewVBox(
-		widget.NewButton("Basic JakartaEE with Servlet and DB", func() {}),
-		widget.NewButton("Basic JakartaEE with JSF and DB", func() {}),
-		widget.NewButton("Basic JakartaEE with RestAPI and DB", func() {}),
-		widget.NewButton("Basich SpringBoot MicroService with DB", func() {}),
+		widget.NewButton("Basic JakartaEE with Servlet and DB", func() {
+			log.Println("Basic JakartaEE with Servlet")
+			log.Println(pm.OS.Name)
+		}),
+		widget.NewButton("Basic JakartaEE with JSF and DB", func() {
+			log.Println("Basic JakartaEE Project")
+			log.Println(pm.OS.Name)
+		}),
+		widget.NewButton("Basic JakartaEE with RestAPI and DB", func() {
+			log.Println("JakartaEE Project with RestAPI")
+			log.Println(pm.OS.Name)
+		}),
+		widget.NewButton("Basic SpringBoot MicroService with DB", func() {
+			log.Println("SpringBoot Project")
+			log.Println(pm.OS.Name)
+		}),
 	)
 }
 
