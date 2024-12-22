@@ -46,7 +46,7 @@ func (z *Zypper) PackageInstalled(pkg *Package) (bool, error) {
 	if pkg.SystemPackage == false {
 		return false, nil
 	}
-	cmd := exec.Command(".", "zypper", "info", pkg.NativePackageName[z.name])
+	cmd := exec.Command("zypper", "info", pkg.NativePackageName[z.name])
 	cmd.Env = []string{"LANGUAGE", "en_US.utf-8"}
 	stdout, err := cmd.Output()
 	if err != nil {
@@ -71,7 +71,7 @@ func (z *Zypper) PackageAvailable(pkg *Package) (bool, error) {
 		return false, nil
 	}
 	env := []string{"LANGUAGE", "en_US.utf-8"}
-	cmd := exec.Command(".", "zypper", "info", pkg.NativePackageName[z.name])
+	cmd := exec.Command("zypper", "info", pkg.NativePackageName[z.name])
 	cmd.Env = env
 	stdout, err := cmd.Output()
 	if err != nil {

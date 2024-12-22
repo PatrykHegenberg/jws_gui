@@ -61,7 +61,7 @@ func (a *Apt) PackageAvailable(pkg *Package) (bool, error) {
 	if pkg.SystemPackage == false {
 		return false, nil
 	}
-	stdout, err := exec.Command(".", "apt", "list", "-qq", pkg.NativePackageName[a.name]).Output()
+	stdout, err := exec.Command("apt", "list", "-qq", pkg.NativePackageName[a.name]).Output()
 	output := a.removeEscapeSequences(string(stdout))
 	installed := strings.HasPrefix(output, pkg.Name)
 	a.getPackageVersion(pkg, output)

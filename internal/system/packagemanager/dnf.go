@@ -45,7 +45,7 @@ func (y *Dnf) PackageInstalled(pkg *Package) (bool, error) {
 	if pkg.SystemPackage == false {
 		return false, nil
 	}
-	stdout, err := exec.Command(".", "dnf", "info", "installed", pkg.NativePackageName[y.name]).Output()
+	stdout, err := exec.Command("dnf", "info", "installed", pkg.NativePackageName[y.name]).Output()
 	if err != nil {
 		_, ok := err.(*exec.ExitError)
 		if ok {
@@ -69,7 +69,7 @@ func (y *Dnf) PackageAvailable(pkg *Package) (bool, error) {
 	if pkg.SystemPackage == false {
 		return false, nil
 	}
-	stdout, err := exec.Command(".", "dnf", "info", pkg.NativePackageName[y.name]).Output()
+	stdout, err := exec.Command("dnf", "info", pkg.NativePackageName[y.name]).Output()
 	if err != nil {
 		_, ok := err.(*exec.ExitError)
 		if ok {
